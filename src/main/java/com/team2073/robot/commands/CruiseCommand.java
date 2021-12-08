@@ -7,10 +7,11 @@ import com.team2073.robot.subsystems.SimpleSubsystem;
 public class CruiseCommand extends AbstractLoggingCommand {
     private ApplicationContext appCtx = ApplicationContext.getInstance();
     private SimpleSubsystem simpleSubsystem = appCtx.getSimpleSubsystem();
-
+    public double cc = 0;
     @Override
     protected void initializeDelegate() {
         simpleSubsystem.setCurrentState(SimpleSubsystem.SimpleSubsystemState.CRUISE);
+        ;
     }
 
     @Override

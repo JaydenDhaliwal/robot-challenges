@@ -10,22 +10,26 @@ package com.team2073.robot.subsystems;
 public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private final ApplicationContext appCtx = ApplicationContext.getInstance();
     private final CANSparkMax motor = appCtx.getMotor();
-    private final CANEncoder position = new CANEncoder(motor);
-    private final double originalPosition = position.getPosition();
+    private final double originalPosition = motor.getEncoder().getPosition();
     private SimpleSubsystemState currentState = SimpleSubsystemState.STICK;
     private double output = 0;
+    private int count = 0;
+    private double originalOutput = 0;
+    public boolean isFinished = false;
     public SimpleSubsystem() {
         autoRegisterWithPeriodicRunner();
     }
     @Override
     public void onPeriodicAsync() {
+        System.out.println(motor.getEncoder().getPosition());
+
 
         switch(currentState) {
             case STOP:
                 output = 0;
                 break;
             case HALF_POWER:
-                output = 0.5;
+                output = 0.2;
                 if (appCtx.getController().getRawAxis(2) != 0 || appCtx.getController().getRawAxis(3) != 0) {
                     double totalChange = appCtx.getController().getRawAxis(3) - appCtx.getController().getRawAxis(2);
                     output = (output * totalChange) + output;
@@ -37,7 +41,6 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 } else if (output < 0.2 && output > -0.2) {
                     output = 0;
                 }
-                System.out.println("Printing Works");
                 break;
             case STICK:
                 if (appCtx.getController().getY() <= 0.8) {
@@ -64,44 +67,90 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                         output = 0;
                     }
                 }
-                System.out.println(appCtx.getController().getY());
-                System.out.println("Finally working.");
+                System.out.println(-1 * appCtx.getController().getY());
                 break;
             case PULSE:
                 break;
             case RESET:
-                //https://www.revrobotics.com/content/sw/max/sw-docs/java/com/revrobotics/CANEncoder.html
-                int change = (int)position.getPosition() - (int)originalPosition;
-                System.out.print(position.getPosition() + " ");
-                System.out.print(originalPosition + " ");
-                System.out.println(change);
-                if ((int)change > 0) {
-                    while ((int)position.getPosition() != (int)originalPosition) {
+                int change = (int)motor.getEncoder().getPosition() - (int)originalPosition;
+                if (!((int)motor.getEncoder().getPosition() < (int)originalPosition + 15)) {
+                    while(!((int)motor.getEncoder().getPosition() < (int)originalPosition + 15)){
                         output = -0.1;
+                        count++;
+                        if (appCtx.getController().getY() <= 0.8) {
+                            if (appCtx.getController().getY() >= 0.2) {
+                                output = (appCtx.getController().getY()) * -1;
+                            } else if (appCtx.getController().getY() >= -0.2 && appCtx.getController().getY() <= 0.2) {
+                                output = 0;
+                            } else if (appCtx.getController().getY() >= -0.8) {
+                                output = (appCtx.getController().getY()) * -1;
+                            } else if (appCtx.getController().getY() < -0.8) {
+                                output = 0.8;
+                            }
+                        } else {
+                            output = -0.8;
+                        }
+                        System.out.println(count);
+                        System.out.println("-");
                         motor.set(output);
-                        position.getPosition();
-                        change = (int)position.getPosition() - (int)originalPosition;
-                        System.out.print((int)position.getPosition() + " ");
-                        System.out.print((int)originalPosition + " ");
-                        System.out.println((int)change);
                     }
-                    output = 0;
-                } else if(change < 0){
-                    while ((int)position.getPosition() != (int)originalPosition) {
+
+                } else if(!((int)motor.getEncoder().getPosition() > (int)originalPosition - 15)){
+                    while(!((int)motor.getEncoder().getPosition() > (int)originalPosition - 15)) {
                         output = 0.1;
+                        count++;
+                        if (appCtx.getController().getY() <= 0.8) {
+                             if (appCtx.getController().getY() >= 0.2) {
+                                output = (appCtx.getController().getY()) * -1;
+                             } else if (appCtx.getController().getY() >= -0.2 && appCtx.getController().getY() <= 0.2) {
+                                output = 0;
+                            } else if (appCtx.getController().getY() >= -0.8) {
+                                 output = (appCtx.getController().getY()) * -1;
+                            } else if (appCtx.getController().getY() < -0.8) {
+                                output = 0.8;
+                            }
+                        } else {
+                            output = -0.8;
+                        }
+                        System.out.println(count);
+                        System.out.println("+");
                         motor.set(output);
-                        position.getPosition();
-                        change = (int)position.getPosition() - (int)originalPosition;
-                        System.out.print((int)position.getPosition() + " ");
-                        System.out.print((int)originalPosition + " ");
-                        System.out.println(change);
                     }
-                    output = 0;
                 } else {
                     output = 0;
+                    setCurrentState(SimpleSubsystemState.STICK);
                 }
+
+
                 break;
             case CRUISE:
+                originalOutput = motor.getAppliedOutput();
+                if(originalOutput > 0) {
+                    if ((-1 * appCtx.getController().getY()) > originalOutput) {
+                        double yVal = appCtx.getController().getY();
+                        while(-1 * appCtx.getController().getY() > originalOutput){
+                            output = -1 * yVal;
+                            yVal = appCtx.getController().getY();
+                        }
+                        output = originalOutput;
+
+                    } else {
+                        output = originalOutput;
+                    }
+                } else {
+                    if ((-1 * appCtx.getController().getY()) < originalOutput) {
+                        double yVal = appCtx.getController().getY();
+                        while(-1 * appCtx.getController().getY() < originalOutput){
+                            output = -1 * yVal;
+                            yVal = appCtx.getController().getY();
+                        }
+                        while(-1 * appCtx.getController().getY() > originalOutput){
+                            output = originalOutput;
+                        }
+                    } else {
+                        output = originalOutput;
+                    }
+                }
                 break;
             case REVOLUTION:
                 break;
@@ -109,12 +158,21 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 output = 0;
                 break;
         }
+        if(output >= 0.8){
+            output = 0.8;
+        } else if(output < 0.2 && output > -0.2){
+            output = 0;
+        } else if(output <= -0.8){
+            output = -0.8;
+        }
         motor.set(output);
     }
 
     public void setCurrentState(SimpleSubsystemState currentState) {
         this.currentState = currentState;
     }
+
+
     public enum SimpleSubsystemState {
         STOP,
         HALF_POWER,
