@@ -22,7 +22,7 @@ public class OperatorInterface {
         a.whileHeld(new HalfPowerCommand());
         lb.whileHeld(new PulseCommand());
         x.whenPressed(new ResetCommand());
-        y.whenPressed(new CruiseCommand());
+        y.toggleWhenPressed(new CruiseCommand());
         b.whenPressed(new RevolutionCommand());
     }
 }

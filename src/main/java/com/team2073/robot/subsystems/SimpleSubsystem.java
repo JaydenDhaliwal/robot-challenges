@@ -10,14 +10,22 @@ package com.team2073.robot.subsystems;
 public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private final ApplicationContext appCtx = ApplicationContext.getInstance();
     private final CANSparkMax motor = appCtx.getMotor();
+    private final SimpleSubsystem simpleSubsystem = new SimpleSubsystem();
     private final double originalPosition = motor.getEncoder().getPosition();
     private SimpleSubsystemState currentState = SimpleSubsystemState.STICK;
     private double output = 0;
     private int count = 0;
-    private double originalOutput = 0;
+    private double originalOutput = simpleSubsystem.CruiseOutput();
     public boolean isFinished = false;
     public SimpleSubsystem() {
         autoRegisterWithPeriodicRunner();
+    }
+    public double CruiseOutput(){
+        if(simpleSubsystem.getCurrentState() == SimpleSubsystemState.CRUISE) {
+            return appCtx.getController().getY();
+        } else {
+            return 0.0;
+        }
     }
     @Override
     public void onPeriodicAsync() {
@@ -124,7 +132,6 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
 
                 break;
             case CRUISE:
-                originalOutput = motor.getAppliedOutput();
                 if(originalOutput > 0) {
                     if ((-1 * appCtx.getController().getY()) > originalOutput) {
                         double yVal = appCtx.getController().getY();
@@ -170,6 +177,10 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
 
     public void setCurrentState(SimpleSubsystemState currentState) {
         this.currentState = currentState;
+    }
+
+    public SimpleSubsystemState getCurrentState() {
+        return this.currentState;
     }
 
 
