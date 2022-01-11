@@ -11,6 +11,7 @@ public class PulseCommand extends AbstractLoggingCommand {
     @Override
     protected void initializeDelegate() {
         simpleSubsystem.setCurrentState(SimpleSubsystem.SimpleSubsystemState.PULSE);
+
     }
 
     @Override
