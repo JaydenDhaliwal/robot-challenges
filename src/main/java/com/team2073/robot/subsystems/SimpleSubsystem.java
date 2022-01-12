@@ -47,20 +47,16 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 break;
             case RESET:
                 System.out.println(motor.getEncoder().getPosition());
-                if (((int)motor.getEncoder().getPosition() < -50) || ((int)motor.getEncoder().getPosition() > 50)) {
+                if (!((int)motor.getEncoder().getPosition() < 50 && (int)motor.getEncoder().getPosition() >-50)) {
                     System.out.println(motor.getEncoder().getPosition());
                     if((int) motor.getEncoder().getPosition() > 50) {
                         output = -0.2;
-                        if (appCtx.getController().getY() >= 0.2 || appCtx.getController().getY() <= -0.2){
-                            output = appCtx.getController().getY();
-                        }
                     }else if((int)motor.getEncoder().getPosition() < -50) {
                         output = 0.2;
-                        if(appCtx.getController().getY() >= 0.2 || appCtx.getController().getY() <= -0.2){
-                            output = appCtx.getController().getY();
-                        }
-
                     }
+                } else {
+                    output = 0;
+                    System.out.println("Done");
                 }
                 break;
             case CRUISE:
@@ -88,6 +84,8 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 if(originalPosition + 3000 > motor.getEncoder().getPosition()){
                     output = 0.5;
                     System.out.println(motor.getEncoder().getPosition());
+                }
+                else{System.out.println("Done"); output = 0;break;
                 }
                 break;
             default:
