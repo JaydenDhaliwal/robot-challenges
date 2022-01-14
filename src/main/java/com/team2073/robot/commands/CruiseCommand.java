@@ -17,6 +17,7 @@ public class CruiseCommand extends AbstractLoggingCommand {
     @Override
     protected void endDelegate() {
         simpleSubsystem.setCurrentState(SimpleSubsystem.SimpleSubsystemState.STICK);
+        simpleSubsystem.originalOutput = 0;
     }
 
     @Override

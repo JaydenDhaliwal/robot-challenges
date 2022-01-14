@@ -4,7 +4,8 @@ import com.team2073.common.robot.AbstractRobotDelegate;
 import com.team2073.robot.subsystems.SimpleSubsystem;
 
 public class RobotDelegate extends AbstractRobotDelegate {
-    SimpleSubsystem simpleSubsystem = new SimpleSubsystem();
+   // dont create simpleSubsystem directly!!!!!!!!!!!!!!!!!!!!!
+    // use appctx
 
     public RobotDelegate(double period) {
         super(period);

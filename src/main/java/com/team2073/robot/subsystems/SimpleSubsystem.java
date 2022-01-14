@@ -11,9 +11,9 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private final ApplicationContext appCtx = ApplicationContext.getInstance();
     private final CANSparkMax motor = appCtx.getMotor();
     private double originalPosition = 0;
-    private SimpleSubsystemState currentState = SimpleSubsystemState.TEMP;
+    private SimpleSubsystemState currentState = SimpleSubsystemState.STICK;
     private double output = 0;
-    public double originalOutput = 0;
+    public static double originalOutput = 0;
     public Timer timer = new Timer();
     public SimpleSubsystem() {
         autoRegisterWithPeriodicRunner();
@@ -30,12 +30,11 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 output = 0.5;
                 System.out.println(output);
 
-                /*
+
                 if (appCtx.getController().getRawAxis(2) != 0 || appCtx.getController().getRawAxis(3) != 0) {
                     double totalChange = appCtx.getController().getRawAxis(3) - appCtx.getController().getRawAxis(2);
                     output = (output * totalChange) + output;
                 }
-                */
 
                 break;
             case STICK:
@@ -60,9 +59,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 }
                 break;
             case RESET:
-                System.out.println(motor.getEncoder().getPosition());
                 if (!((int) motor.getEncoder().getPosition() < 50 && (int) motor.getEncoder().getPosition() > -50)) {
-                    System.out.println(motor.getEncoder().getPosition());
                     if ((int) motor.getEncoder().getPosition() > 50) {
                         output = -0.2;
                         if (appCtx.getController().getY() < -0.2 || appCtx.getController().getY() > 0.2) {
@@ -83,18 +80,15 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 if (originalOutput == 0) {
                     originalOutput = output;
                 }
-                System.out.println("original output: " + originalOutput);
-                System.out.println("output " + output);
-                System.out.println("appCtx.getController().getY() " + appCtx.getController().getY());
                 if (originalOutput > 0) {
-                    if (appCtx.getController().getY() > originalOutput) {
-                        output = appCtx.getController().getY();
+                    if (-appCtx.getController().getY() > originalOutput) {
+                        output = -appCtx.getController().getY();
                     } else {
                         output = originalOutput;
                     }
                 } else {
-                    if (appCtx.getController().getY() < originalOutput) {
-                        output = appCtx.getController().getY();
+                    if (-appCtx.getController().getY() < originalOutput) {
+                        output = -appCtx.getController().getY();
                     } else {
                         output = originalOutput;
                     }
@@ -124,8 +118,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
             } else if (output <= -0.8) {
                 output = -0.8;
             }
-            System.out.println("Right before set: " + output);
-            System.out.println("Current State " + currentState);
+
             motor.set(output);
         }
 
@@ -133,6 +126,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
 
 
     public void setCurrentState (SimpleSubsystemState currentState){
+
         this.currentState = currentState;
     }
 
