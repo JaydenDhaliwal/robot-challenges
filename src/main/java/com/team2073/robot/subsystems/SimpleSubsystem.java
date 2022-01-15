@@ -6,6 +6,7 @@ package com.team2073.robot.subsystems;
  import com.team2073.robot.ApplicationContext;
  import com.revrobotics.CANEncoder;
  import com.team2073.common.util.*;
+ import edu.wpi.first.wpilibj.Joystick;
 
 public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private final ApplicationContext appCtx = ApplicationContext.getInstance();
@@ -15,6 +16,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private double output = 0;
     public static double originalOutput = 0;
     public Timer timer = new Timer();
+    private final Joystick controller = appCtx.getController();
     public SimpleSubsystem() {
         autoRegisterWithPeriodicRunner();
     }
@@ -28,30 +30,15 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 break;
             case HALF_POWER:
                 output = 0.5;
-                System.out.println(output);
-
-
-                if (appCtx.getController().getRawAxis(2) != 0 || appCtx.getController().getRawAxis(3) != 0) {
-                    double totalChange = appCtx.getController().getRawAxis(3) - appCtx.getController().getRawAxis(2);
-                    output = (output * totalChange) + output;
-                }
-
+                output += (output * (controller.getRawAxis(3) - controller.getRawAxis(2)));
                 break;
             case STICK:
                 output = -appCtx.getController().getY();
-
-
-                if (appCtx.getController().getRawAxis(2) != 0 || appCtx.getController().getRawAxis(3) != 0) {
-                    double totalChange = appCtx.getController().getRawAxis(3) - appCtx.getController().getRawAxis(2);
-                    output = (output * totalChange) + output;
-                }
-
-
+                output += (output * (controller.getRawAxis(3) - controller.getRawAxis(2)));
                 break;
             case PULSE:
-                if (timer.getElapsedTime() == 0) {
+                if (timer.getElapsedTime() == 0)
                     timer.start();
-                }
                 if (((int) timer.getElapsedTime() / 1000) % 2 == 0) {
                     output = 0.25;
                 } else {
@@ -73,7 +60,6 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                     }
                 } else {
                     output = 0;
-                    System.out.println("Done");
                 }
                 break;
             case CRUISE:
@@ -100,9 +86,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 }
                 if (originalPosition + 3000 > motor.getEncoder().getPosition()) {
                     output = 0.5;
-                    System.out.println(motor.getEncoder().getPosition());
                 } else {
-                    System.out.println("Done");
                     output = 0;
                     break;
                 }
@@ -111,7 +95,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 output = 0;
                 break;
         }
-            if (output >= 0.8) {
+        if (output >= 0.8) {
                 output = 0.8;
             } else if (output < 0.2 && output > -0.2) {
                 output = 0;
