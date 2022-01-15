@@ -16,6 +16,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
     private double output = 0;
     public static double originalOutput = 0;
     public Timer timer = new Timer();
+    public CANEncoder encoder = motor.getEncoder();
     private final Joystick controller = appCtx.getController();
     public SimpleSubsystem() {
         autoRegisterWithPeriodicRunner();
@@ -24,6 +25,7 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
 
     @Override
     public void onPeriodicAsync() {
+        output = -controller.getRawAxis(1);
         switch (currentState) {
             case STOP:
                 output = 0;
@@ -34,7 +36,11 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 break;
             case STICK:
                 output = -appCtx.getController().getY();
-                output += (output * (controller.getRawAxis(3) - controller.getRawAxis(2)));
+                if(output > 0) {
+                    output += (output * (controller.getRawAxis(3) - controller.getRawAxis(2)));
+                } else if(output < 0) {
+                    output -= (output * (controller.getRawAxis(2) - controller.getRawAxis(3)));
+                }
                 break;
             case PULSE:
                 if (timer.getElapsedTime() == 0)
@@ -46,16 +52,17 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 }
                 break;
             case RESET:
-                if (!((int) motor.getEncoder().getPosition() < 50 && (int) motor.getEncoder().getPosition() > -50)) {
-                    if ((int) motor.getEncoder().getPosition() > 50) {
+                int position = (int)encoder.getPosition();
+                if (!(position < 50 && position > -50)) {
+                    if (position > 50) {
                         output = -0.2;
-                        if (appCtx.getController().getY() < -0.2 || appCtx.getController().getY() > 0.2) {
-                            output = -appCtx.getController().getY();
+                        if (-controller.getY() < -0.2 ||-controller.getY() > 0.2) {
+                            output = -controller.getY();
                         }
-                    } else if ((int) motor.getEncoder().getPosition() < -50) {
+                    } else if (position < -50) {
                         output = 0.2;
-                        if (appCtx.getController().getY() < -0.2 || appCtx.getController().getY() > 0.2) {
-                            output = -appCtx.getController().getY();
+                        if (-controller.getY() < -0.2 || -controller.getY() > 0.2) {
+                            output = -controller.getY();
                         }
                     }
                 } else {
@@ -67,14 +74,14 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                     originalOutput = output;
                 }
                 if (originalOutput > 0) {
-                    if (-appCtx.getController().getY() > originalOutput) {
-                        output = -appCtx.getController().getY();
+                    if (-controller.getY() > originalOutput) {
+                        output = -controller.getY();
                     } else {
                         output = originalOutput;
                     }
                 } else {
-                    if (-appCtx.getController().getY() < originalOutput) {
-                        output = -appCtx.getController().getY();
+                    if (-controller.getY() < originalOutput) {
+                        output = -controller.getY();
                     } else {
                         output = originalOutput;
                     }
@@ -82,9 +89,9 @@ public class SimpleSubsystem implements AsyncPeriodicRunnable {
                 break;
             case REVOLUTION:
                 if (originalPosition == 0) {
-                    originalPosition = motor.getEncoder().getPosition();
+                    originalPosition = encoder.getPosition();
                 }
-                if (originalPosition + 3000 > motor.getEncoder().getPosition()) {
+                if (originalPosition + 3000 > encoder.getPosition()) {
                     output = 0.5;
                 } else {
                     output = 0;
